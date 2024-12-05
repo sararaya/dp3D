@@ -57,6 +57,12 @@
         chart.radius('40%') // Adjust radius to make the chart fit smaller containers
              .innerRadius('25%'); // Adjust inner radius for smaller containers
 
+        // Enable labels
+        chart.labels()
+             .position('outside') // Position labels outside the slices
+             .format('{%X}: {%Value}'); // Format to show category and value
+        chart.labels().fontColor("#FFFFFF"); // Set label color to white
+
         // Disable legend
         chart.legend(false); // Remove the legend
 
