@@ -11,7 +11,7 @@
       height: 100%;
       margin: 0;
       padding: 0;
-      background-color: #2B2B2B; /* Match chart background */
+      background-color: transparent;
     }
     #container {
       width: 100%;
@@ -27,16 +27,13 @@
       right: 0;
       width: 100%;
       height: 15%;
-      background-color: #303234; /* Match chart background */
-      z-index: 10; /* Ensure it overlays the chart */
+      background-color: transparent;
+      z-index: 10;
     }
   </style>
 </head>
 <body>
-  <div id="container">
-    <!-- Overlay to hide the watermark -->
-    <div id="overlay"></div>
-  </div>
+  <div id="container"></div>
   <script src="https://cdn.anychart.com/releases/v8/js/anychart-base.min.js"></script>
   <script src="https://cdn.anychart.com/releases/v8/js/anychart-ui.min.js"></script>
   <script src="https://cdn.anychart.com/releases/v8/js/anychart-exports.min.js"></script>
@@ -60,14 +57,27 @@
         // Enable labels
         chart.labels()
              .position('outside') // Position labels outside the slices
-             .format('{%X}: {%Value}'); // Format to show category and value
-        chart.labels().fontColor("#FFFFFF"); // Set label color to white
+             .format('{%X}: {%Value}')
+             .fontColor("#FFFFFF")  // Set label color to white
+             .fontWeight('bold');
+
+        // Set tooltip text color to white
+        chart.tooltip()
+             .titleFormat("{%X}")
+             .format("Value: {%Value}")
+             .background().fill("transparent");
+        chart.tooltip().fontColor("#FFFFFF");
+
+        // Set chart background to transparent
+        chart.background().fill('transparent');
 
         // Disable legend
-        chart.legend(false); // Remove the legend
-
-        // Set background color
-        chart.background().fill('#2B2B2B'); // Set background color to #2B2B2B
+        chart.legend()
+             .enabled(true) // Enable legend if required
+             .position('right')
+             .itemsLayout('vertical')
+             .fontColor('#FFFFFF')
+             .background().fill('transparent');
 
         // Set container id
         chart.container('container');
@@ -90,14 +100,11 @@
       // Check if data is received
       if (!sasData || !sasData.data || sasData.data.length === 0) {
         console.warn("No data received from SAS VA or data is in incorrect format.");
-        // Draw chart with default data
         drawOrUpdateChart([{ x: "No Data", value: 1 }]);
         return;
       }
 
       let data = sasData.data;
-
-      // Assuming 'حالة البلاغ' is the only variable assigned
       let categoryIndex = 0;
 
       // Prepare data: Count frequencies of each category
