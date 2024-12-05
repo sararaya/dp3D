@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>3D Donut Chart with SAS VA Integration</title>
+  <link rel="stylesheet" href="https://cdn.anychart.com/releases/v8/css/anychart-ui.min.css">
+  <link rel="stylesheet" href="https://cdn.anychart.com/releases/v8/fonts/css/anychart-font.min.css">
+  <style>
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background-color: #2B2B2B; /* Match chart background */
+    }
+    #container {
+      width: 100%;
+      height: 100%;
+      max-width: 100%;
+      max-height: 100%;
+      position: relative;
+      margin: auto;
+    }
+    #overlay {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 100%;
+      height: 15%;
+      background-color: #303234; /* Match chart background */
+      z-index: 10; /* Ensure it overlays the chart */
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <!-- Overlay to hide the watermark -->
+    <div id="overlay"></div>
+  </div>
+  <script src="https://cdn.anychart.com/releases/v8/js/anychart-base.min.js"></script>
+  <script src="https://cdn.anychart.com/releases/v8/js/anychart-ui.min.js"></script>
+  <script src="https://cdn.anychart.com/releases/v8/js/anychart-exports.min.js"></script>
+  <script>
+    // Declare the chart variable globally
+    var chart;
+
+    // Function to draw or update the chart
+    function drawOrUpdateChart(chartData) {
+      if (!chart) {
+        // Create the chart instance once
+        chart = anychart.pie3d();
+
+        // Customize slices
+        chart.palette(['#A393D1', '#FFB461', '#FF6F61', '#17A2B8']); // Add more colors if needed
+
+        // Remove title and set properties
+        chart.radius('40%') // Adjust radius to make the chart fit smaller containers
+             .innerRadius('25%'); // Adjust inner radius for smaller containers
+
+        // Disable legend
+        chart.legend(false); // Remove the legend
+
+        // Set background color
+        chart.background().fill('#2B2B2B'); // Set background color to #2B2B2B
+
+        // Set container id
+        chart.container('container');
+
+        // Draw the chart
+        chart.draw();
+      }
+
+      // Update the chart data
+      chart.data(chartData);
+    }
+
+    // Function to process data from SAS VA
+    function onMessage(evt) {
+      console.log("[ddc] onMessage triggered");
+      console.log("[ddc] evt.data:", evt.data);
+
+      let sasData = evt.data;
+
+      // Check if data is received
+      if (!sasData || !sasData.data || sasData.data.length === 0) {
+        console.warn("No data received from SAS VA or data is in incorrect format.");
+        // Draw chart with default data
+        drawOrUpdateChart([{ x: "No Data", value: 1 }]);
+        return;
+      }
+
+      let data = sasData.data;
+
+      // Assuming 'حالة البلاغ' is the only variable assigned
+      let categoryIndex = 0;
+
+      // Prepare data: Count frequencies of each category
+      let frequencyMap = {};
+
+      data.forEach(row => {
+        let categoryValue = row[categoryIndex];
+        if (categoryValue in frequencyMap) {
+          frequencyMap[categoryValue]++;
+        } else {
+          frequencyMap[categoryValue] = 1;
+        }
+      });
+
+      // Convert frequencyMap to chartData array
+      let chartData = Object.keys(frequencyMap).map(key => {
+        return {
+          x: key,
+          value: frequencyMap[key]
+        };
+      });
+
+      console.log("[ddc] chartData:", chartData);
+
+      // Draw or update the chart
+      drawOrUpdateChart(chartData);
+    }
+
+    // Listen for messages from SAS VA
+    if (window.addEventListener) {
+      window.addEventListener("message", onMessage, false);
+    } else {
+      window.attachEvent("onmessage", onMessage);
+    }
+
+    // For testing purposes: Draw chart with default data if no data is received after a delay
+    setTimeout(function() {
+      if (typeof anychart !== 'undefined' && !document.querySelector('#container svg')) {
+        console.log("[ddc] No data received, drawing chart with default data for testing.");
+        let defaultData = [
+          { x: "No Data", value: 1 }
+        ];
+        drawOrUpdateChart(defaultData);
+      }
+    }, 2000); // Adjust the delay as needed
+  </script>
+</body>
+</html>
